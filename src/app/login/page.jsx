@@ -2,32 +2,68 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { useRouter } from 'next/navigation'
+
 
 export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const router = useRouter()
+
 
   //Step 1 - create the supabase client
   const supabase = createClient()
 
   async function handleSignIn() {
-    console.log("Signing in");
-    //Step 1 - create the supabase client
-    //Step 2 - sign in the user
-    //Step 3 - redirect to the dashboard
-    //Step 4 - show a success message
+    try {
+      setError('')
+  
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+  
+      if (signInError) {
+        setError(`❌ ${signInError.message}`)
+        return
+      }
+  
+      setError('✅ Sign in successful! Redirecting...')
+      window.location.href = '/dashboard'
+  
+    } catch (err) {
+      setError(`❌ ${err?.message || 'Something went wrong '}`)
+    }
   }
+  
+  
+  
 
   async function handleSignUp() {
-    console.log("Signing up");
-    //Step 1 - create the supabase client
-    //Step 2 - sign up the user
-    //Step 3 - redirect to the dashboard
-    //Step 4 - show a success message
-    //Step 5 - show an error message if the user already exists
+    try {
+      setError('')
+  
+      const { error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+      })
+  
+      if (signUpError) {
+        setError(`❌ ${signUpError.message}`)
+        return
+      }
+  
+      setError('✅ Sign up successful! Redirecting...')
+      window.location.href = '/dashboard'
+  
+    } catch (err) {
+      setError(`❌ ${err?.message || 'Something went wrong'}`)
+    }
   }
-
+  
+  
+  
   return (
     <>
       <style>{`

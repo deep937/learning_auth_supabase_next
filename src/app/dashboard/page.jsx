@@ -1,17 +1,32 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import {logout} from './actions'
+import {logout, addNote} from './actions'
+
+
 
 export default async function Dashboard() {
   const supabase = await createClient()
   //Step 1 - get the user from the database
 
+  const { data: { user }, error } = await supabase.auth.getUser() //protected route
+
 
   //Step 2 - if the user is not found, redirect to the login page
 
+  if(error || !user) {
+    redirect('/login')
+  }
+
 
   //Step 3 - if the user is found, show the dashboard
-  const user = null;
+  
+  const { data: notes } = await supabase
+  .from('notes')
+  .select('*')
+  .order('created_at', { ascending: false })
+
+
+
   return (
     <div style={{
       minHeight: '100vh',
@@ -54,7 +69,7 @@ export default async function Dashboard() {
           {/* Logout – server action */}
           <form action={logout}>
             <button
-              type="submit"
+              type="submit "
               style={{
                 padding: '12px 24px',
                 background: '#dc3545',
@@ -75,7 +90,8 @@ export default async function Dashboard() {
           padding: '30px',
           background: '#f8f9fa',
           borderRadius: '8px',
-          textAlign: 'center'
+          textAlign: 'center',
+          marginBottom: '30px'
         }}>
           <p style={{
             fontSize: '1.2rem',
@@ -85,6 +101,125 @@ export default async function Dashboard() {
           }}>
             🎉 You are successfully logged in!
           </p>
+        </div>
+
+        {/* Add Note Section */}
+        <div style={{
+          padding: '30px',
+          background: '#f8f9fa',
+          borderRadius: '8px',
+          marginBottom: '30px'
+        }}>
+          <h2 style={{
+            fontSize: '1.5rem',
+            fontWeight: '600',
+            marginBottom: '20px',
+            color: '#333'
+          }}>
+            Add a Note 📝
+          </h2>
+          <form action={addNote} style={{
+            display: 'flex',
+            gap: '10px',
+            flexWrap: 'wrap'
+          }}>
+            <input
+              type="text"
+              name="title"
+              placeholder="Enter note title..."
+              required
+              style={{
+                flex: '1',
+                minWidth: '200px',
+                padding: '12px 16px',
+                fontSize: '1rem',
+                border: '2px solid #e0e0e0',
+                borderRadius: '8px',
+                outline: 'none',
+                color: 'black'
+              }}
+            />
+            <button
+              type="submit"
+              style={{
+                padding: '12px 24px',
+                background: '#667eea',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '1rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              Add Note
+            </button>
+          </form>
+        </div>
+
+        {/* Notes List */}
+        <div style={{
+          padding: '30px',
+          background: '#f8f9fa',
+          borderRadius: '8px'
+        }}>
+          <h2 style={{
+            fontSize: '1.5rem',
+            fontWeight: '600',
+            marginBottom: '20px',
+            color: '#333'
+          }}>
+            Your Notes
+          </h2>
+
+          {(!notes || notes.length === 0) ? (
+            <div style={{
+              padding: '20px',
+              background: 'white',
+              borderRadius: '10px',
+              border: '1px dashed #d0d0d0',
+              color: '#666',
+              textAlign: 'center'
+            }}>
+              No notes yet. Add your first note above.
+            </div>
+          ) : (
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+              gap: '12px'
+            }}>
+              {notes.map((note) => (
+                <div
+                  key={note.id ?? `${note.user_id}-${note.created_at}-${note.title}`}
+                  style={{
+                    background: 'white',
+                    borderRadius: '10px',
+                    padding: '16px',
+                    border: '1px solid #eee',
+                    boxShadow: '0 6px 18px rgba(0, 0, 0, 0.06)'
+                  }}
+                >
+                  <div style={{
+                    fontSize: '1.05rem',
+                    fontWeight: '700',
+                    color: '#222',
+                    marginBottom: '8px',
+                    wordBreak: 'break-word'
+                  }}>
+                    {String(note.title ?? '').trim() || '(Untitled)'}
+                  </div>
+                  <div style={{
+                    fontSize: '0.9rem',
+                    color: '#777'
+                  }}>
+                    {note.created_at ? new Date(note.created_at).toLocaleString() : ''}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
